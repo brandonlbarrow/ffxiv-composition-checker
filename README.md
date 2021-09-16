@@ -1,0 +1,1 @@
+# ffxiv-composition-checker
