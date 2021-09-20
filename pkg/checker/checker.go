@@ -20,7 +20,7 @@ const (
 )
 
 var (
-	Jobs                                                         = JobMap{
+	Jobs = JobMap{
 		"PLD": Tank,
 		"WAR": Tank,
 		"DRK": Tank,
@@ -42,12 +42,12 @@ var (
 		"MCH": PhysicalRanged,
 	}
 	eMap = map[Kind]KindType{
-		Tank: _Tank,
-		PureHealer: _Healer,
-		ShieldHealer: _Healer,
-		PhysicalMelee: _DPS,
+		Tank:           _Tank,
+		PureHealer:     _Healer,
+		ShieldHealer:   _Healer,
+		PhysicalMelee:  _DPS,
 		PhysicalRanged: _DPS,
-		MagicalRanged: _DPS,
+		MagicalRanged:  _DPS,
 	}
 )
 
@@ -78,18 +78,19 @@ type LightParty struct {
 
 // A FullParty is comprised of two tanks, two healers, and four DPS.
 type FullParty struct {
-	Tank1 PlayerAssignment
-	Tank2 PlayerAssignment
+	Tank1   PlayerAssignment
+	Tank2   PlayerAssignment
 	Healer1 PlayerAssignment
 	Healer2 PlayerAssignment
-	DPS1 PlayerAssignment
-	DPS2 PlayerAssignment
-	DPS3 PlayerAssignment
-	DPS4 PlayerAssignment
+	DPS1    PlayerAssignment
+	DPS2    PlayerAssignment
+	DPS3    PlayerAssignment
+	DPS4    PlayerAssignment
 }
 
 // JobMap maps job names to what kind of job they are.
 type JobMap map[string]Kind
+
 // PlayerAssignment contains the map of player name to job it is playing.
 type PlayerAssignment map[string]string
 
@@ -135,7 +136,7 @@ func Allocate(players []Player) (FullParty, error) {
 			switch Jobs[role] {
 			case Tank:
 				if !fullParty.Tank1.Assigned() && !contains(assignedPlayers, player.Name) {
-				    fullParty.Tank1 = AssignRole(player.Name, role)
+					fullParty.Tank1 = AssignRole(player.Name, role)
 					assignedPlayers = append(assignedPlayers, player.Name)
 					continue
 				}
@@ -173,7 +174,7 @@ func Allocate(players []Player) (FullParty, error) {
 					assignedPlayers = append(assignedPlayers, player.Name)
 					continue
 				}
-			case PhysicalRanged: 
+			case PhysicalRanged:
 				if !fullParty.DPS4.Assigned() && !contains(assignedPlayers, player.Name) {
 					fullParty.DPS4 = AssignRole(player.Name, role)
 					assignedPlayers = append(assignedPlayers, player.Name)
