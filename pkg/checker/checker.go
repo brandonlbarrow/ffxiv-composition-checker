@@ -6,53 +6,68 @@ import (
 )
 
 const (
-	Light    = 4
-	Full     = 8
-	Alliance = 24
+	Tank Kind = iota
+	PureHealer
+	ShieldHealer
+	PhysicalMelee
+	PhysicalRanged
+	MagicalRanged
 )
 
 var (
 	Jobs                                                         = JobMap{
-		"PLD": "Tank",
-		"WAR": "Tank",
-		"DRK": "Tank",
-		"GNB": "Tank",
-		"WHM": "PHealer",
-		"AST": "PHealer",
-		"SCH": "SHealer",
-		"SGE": "SHealer",
-		"DRG": "PDPS",
-		"NIN": "PDPS",
-		"MNK": "PDPS",
-		"SAM": "PDPS",
-		"RPR": "PDPS",
-		"BLM": "MDPS",
-		"SMN": "MDPS",
-		"RDM": "MDPS",
-		"BRD": "RDPS",
-		"DNC": "RDPS",
-		"MCH": "RDPS",
+		"PLD": Tank,
+		"WAR": Tank,
+		"DRK": Tank,
+		"GNB": Tank,
+		"WHM": PureHealer,
+		"AST": PureHealer,
+		"SCH": ShieldHealer,
+		"SGE": ShieldHealer,
+		"DRG": PhysicalMelee,
+		"NIN": PhysicalMelee,
+		"MNK": PhysicalMelee,
+		"SAM": PhysicalMelee,
+		"RPR": PhysicalMelee,
+		"BLM": MagicalRanged,
+		"SMN": MagicalRanged,
+		"RDM": MagicalRanged,
+		"BRD": PhysicalRanged,
+		"DNC": PhysicalRanged,
+		"MCH": PhysicalRanged,
+	}
+	FParty = map[string]string{
+		"Tank1": "",
+		"Tank2": "",
+		"PHealer1": "",
+		"SHealer1": "",
+		"PDPS1": "",
+		"PDPS2": "",
+		"RDPS1": "",
+		"RPDS2": "",
+	}
+	eMap = JobMapEnum{
+		"PLD": Tank,
+
 	}
 )
 
-type Tank Kind 
-type PHealer Kind
+type Kind int
 
 type Player struct {
 	Name  string
 	Roles []string
 }
 
-type Composition struct {
+type CompArgs struct {
 	Size   int
 	Unique bool
 }
 
 type Variant struct {
-	LightParty LightParty
-	FullParty  FullParty
 }
 
+// A LightParty is comprised of one tank, one healer, and two DPS.
 type LightParty struct {
 	Tank1   map[string]string
 	Healer1 map[string]string
@@ -60,23 +75,21 @@ type LightParty struct {
 	DPS2    map[string]string
 }
 
-// A FullParty is comprised of two tanks, one pure healer, one shield healer, one ranged physical DPS, one magical DPS, and two physical melee DPS. Each type is a Slot. 
+// A FullParty is comprised of two tanks, two healers, and four DPS.
 type FullParty struct {
 	Tank1 PlayerAssignment
-	Tank2  PlayerAssignment
-	PHealer PlayerAssignment
-	SHealer PlayerAssignment
-	RDPS1  PlayerAssignment
-	MDPS1    PlayerAssignment
-	PDPS1    PlayerAssignment
-	PDPS2    PlayerAssignment
+	Tank2 PlayerAssignment
+	Healer1 PlayerAssignment
+	Healer2 PlayerAssignment
+	DPS1 PlayerAssignment
+	DPS2 PlayerAssignment
+	DPS3 PlayerAssignment
+	DPS4 PlayerAssignment
 }
 
-type Kind string
-type Slot Kind
-
 // JobMap maps job names to what kind of job they are.
-type JobMap map[string]string
+type JobMap map[string]Kind
+type JobMapEnum map[string]Kind
 // PlayerAssignment contains the map of player name to job it is playing.
 type PlayerAssignment map[string]string
 
@@ -97,8 +110,18 @@ func AssignRole(player, role string) map[string]string {
 	return map[string]string{player: role}
 }
 
+type Composition interface{}
+
+func GetComposition(args CompArgs) Composition {
+	if args.Size == 8 {
+		return FullParty{}
+	} else {
+		return LightParty{}
+	}
+}
+
 // CheckCompositionVariants takes a slice of Players and a desired Composition, and determines how many Variants can be made out of the supplied inputs. It returns a slice of Variant, or an error if one is occurred.
-func CheckCompositionVariants(ctx context.Context, players []Player, composition Composition) ([]Variant, error) {
+func CheckCompositionVariants(ctx context.Context, players []Player, composition CompArgs) ([]Variant, error) {
 	return nil, nil
 }
 
@@ -115,7 +138,7 @@ func Allocate(players []Player) (FullParty, error) {
 		fmt.Printf("Player %s has the following roles: %s\n", player.Name, player.Roles)
 		for _, role := range player.Roles {
 			switch Jobs[role] {
-			case "Tank":
+			case Tank:
 				if !fullParty.Tank1.Assigned() && !contains(assignedPlayers, player.Name) {
 				    fullParty.Tank1 = AssignRole(player.Name, role)
 					assignedPlayers = append(assignedPlayers, player.Name)
@@ -126,38 +149,38 @@ func Allocate(players []Player) (FullParty, error) {
 					assignedPlayers = append(assignedPlayers, player.Name)
 					continue
 				}
-			case "PHealer":
-				if !fullParty.PHealer.Assigned() && !contains(assignedPlayers, player.Name) {
-					fullParty.PHealer = AssignRole(player.Name, role)
+			case PureHealer:
+				if !fullParty.Healer1.Assigned() && !contains(assignedPlayers, player.Name) {
+					fullParty.Healer1 = AssignRole(player.Name, role)
 					assignedPlayers = append(assignedPlayers, player.Name)
 					continue
 				}
-			case "SHealer":
-				if !fullParty.SHealer.Assigned() && !contains(assignedPlayers, player.Name) {
-					fullParty.SHealer = AssignRole(player.Name, role)
+			case ShieldHealer:
+				if !fullParty.Healer2.Assigned() && !contains(assignedPlayers, player.Name) {
+					fullParty.Healer2 = AssignRole(player.Name, role)
 					assignedPlayers = append(assignedPlayers, player.Name)
 					continue
 				}
-			case "PDPS":
-				if !fullParty.PDPS1.Assigned() && !contains(assignedPlayers, player.Name) {
-					fullParty.PDPS1 = AssignRole(player.Name, role)
+			case PhysicalMelee:
+				if !fullParty.DPS1.Assigned() && !contains(assignedPlayers, player.Name) {
+					fullParty.DPS1 = AssignRole(player.Name, role)
 					assignedPlayers = append(assignedPlayers, player.Name)
 					continue
 				}
-				if !fullParty.PDPS2.Assigned() && !contains(assignedPlayers, player.Name) {
-					fullParty.PDPS2 = AssignRole(player.Name, role)
+				if !fullParty.DPS2.Assigned() && !contains(assignedPlayers, player.Name) {
+					fullParty.DPS2 = AssignRole(player.Name, role)
 					assignedPlayers = append(assignedPlayers, player.Name)
 					continue
 				}
-			case "MDPS":
-				if !fullParty.MDPS1.Assigned() && !contains(assignedPlayers, player.Name) {
-					fullParty.MDPS1 = AssignRole(player.Name, role)
+			case MagicalRanged:
+				if !fullParty.DPS3.Assigned() && !contains(assignedPlayers, player.Name) {
+					fullParty.DPS3 = AssignRole(player.Name, role)
 					assignedPlayers = append(assignedPlayers, player.Name)
 					continue
 				}
-			case "RDPS": 
-				if !fullParty.RDPS1.Assigned() && !contains(assignedPlayers, player.Name) {
-					fullParty.RDPS1 = AssignRole(player.Name, role)
+			case PhysicalRanged: 
+				if !fullParty.DPS4.Assigned() && !contains(assignedPlayers, player.Name) {
+					fullParty.DPS4 = AssignRole(player.Name, role)
 					assignedPlayers = append(assignedPlayers, player.Name)
 					continue
 				}
