@@ -49,5 +49,9 @@ func main() {
 			},
 		},
 	}
-	fmt.Println(checker.Allocate(players))
+	fp, err := checker.Allocate(players, checker.CompArgs{Format: checker.Any})
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(fp)
 }
