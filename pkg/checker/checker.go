@@ -1,7 +1,6 @@
 package checker
 
 import (
-	"context"
 	"fmt"
 )
 
@@ -12,6 +11,12 @@ const (
 	PhysicalMelee
 	PhysicalRanged
 	MagicalRanged
+)
+
+const (
+	_Tank KindType = iota
+	_Healer
+	_DPS
 )
 
 var (
@@ -36,23 +41,22 @@ var (
 		"DNC": PhysicalRanged,
 		"MCH": PhysicalRanged,
 	}
-	FParty = map[string]string{
-		"Tank1": "",
-		"Tank2": "",
-		"PHealer1": "",
-		"SHealer1": "",
-		"PDPS1": "",
-		"PDPS2": "",
-		"RDPS1": "",
-		"RPDS2": "",
-	}
-	eMap = JobMapEnum{
-		"PLD": Tank,
-
+	eMap = map[Kind]KindType{
+		Tank: _Tank,
+		PureHealer: _Healer,
+		ShieldHealer: _Healer,
+		PhysicalMelee: _DPS,
+		PhysicalRanged: _DPS,
+		MagicalRanged: _DPS,
 	}
 )
 
 type Kind int
+type KindType int
+
+func (k Kind) TypeOf() KindType {
+	return eMap[k]
+}
 
 type Player struct {
 	Name  string
@@ -62,9 +66,6 @@ type Player struct {
 type CompArgs struct {
 	Size   int
 	Unique bool
-}
-
-type Variant struct {
 }
 
 // A LightParty is comprised of one tank, one healer, and two DPS.
@@ -89,7 +90,6 @@ type FullParty struct {
 
 // JobMap maps job names to what kind of job they are.
 type JobMap map[string]Kind
-type JobMapEnum map[string]Kind
 // PlayerAssignment contains the map of player name to job it is playing.
 type PlayerAssignment map[string]string
 
@@ -118,11 +118,6 @@ func GetComposition(args CompArgs) Composition {
 	} else {
 		return LightParty{}
 	}
-}
-
-// CheckCompositionVariants takes a slice of Players and a desired Composition, and determines how many Variants can be made out of the supplied inputs. It returns a slice of Variant, or an error if one is occurred.
-func CheckCompositionVariants(ctx context.Context, players []Player, composition CompArgs) ([]Variant, error) {
-	return nil, nil
 }
 
 // we need to accept a slice of values belonging to only one of many types, which are then assigned a slot in the returning data structure. only return the first data structure.
